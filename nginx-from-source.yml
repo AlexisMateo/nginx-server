@@ -1,0 +1,50 @@
+---
+##https://nginx.org/download/nginx-1.17.9.tar.gz
+- hosts: proxyservers
+  tasks:
+
+  - name: Update apt cache
+    become: true
+    apt: 
+      update_cache: true
+
+  - name: intall some nginx dependncies
+    become: true
+    apt:
+      name: "{{ item }}"
+    with_items:
+     - build-essential
+     - libpcre3
+     - libpcre3-dev
+     - zlib1g
+     - zlib1g-dev
+     - libssl-dev
+     - libgd-dev
+
+  - name: download nginx
+    get_url: 
+      url: https://nginx.org/download/nginx-1.17.9.tar.gz
+      dest: /tmp/
+    register: nginx_output
+
+  - name: Extract nginx package
+    unarchive:
+      copy: no
+      src: "{{ nginx_output.dest }}"
+      dest: /tmp/
+
+  - name: Configure nginx with some modules
+    command: "./configure --sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-pcre --pid-path=/var/run/nginx.pid --with-http_ssl_module --with-http_image_filter_module=dynamic --modules-path=/etc/nginx/modules --with-http_v2_module"
+    args:
+      chdir: /tmp/nginx-1.17.9
+  
+  - name: Install nginx
+    become: true
+    shell: make && make install
+    args:
+      chdir: /tmp/nginx-1.17.9
+
+
+
+
+
