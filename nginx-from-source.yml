@@ -44,6 +44,12 @@
     args:
       chdir: /tmp/nginx-1.17.9
 
+  - name: Copy nginx systemd conf file
+    become: true
+    copy:
+      src: nginx.service
+      dest: /lib/systemd/system/nginx.service
+
 
 
 
