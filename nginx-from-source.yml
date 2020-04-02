@@ -1,6 +1,10 @@
 ---
 ##https://nginx.org/download/nginx-1.17.9.tar.gz
 - hosts: proxyservers
+  vars:
+    nginx_version: nginx-1.16.1
+    nginx_download_url: "http://nginx.org/download/{{ nginx_version }}.tar.gz"
+
   tasks:
 
   - name: Update apt cache
@@ -23,26 +27,34 @@
 
   - name: download nginx
     get_url: 
-      url: https://nginx.org/download/nginx-1.17.9.tar.gz
+      url: "{{ nginx_download_url }}"
       dest: /tmp/
-    register: nginx_output
+    register: nginx_tar
 
   - name: Extract nginx package
     unarchive:
       copy: no
-      src: "{{ nginx_output.dest }}"
+      src: "{{ nginx_tar.dest }}"
       dest: /tmp/
+    when: nginx_tar.changed
+    register: nginx_src
+
+
 
   - name: Configure nginx with some modules
     command: "./configure --sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-pcre --pid-path=/var/run/nginx.pid --with-http_ssl_module --with-http_image_filter_module=dynamic --modules-path=/etc/nginx/modules --with-http_v2_module"
     args:
-      chdir: /tmp/nginx-1.17.9
-  
+      chdir: /tmp/{{ nginx_version }}
+    when: nginx_src.changed
+    register: nginx_config
+
+
   - name: Install nginx
     become: true
     shell: make && make install
     args:
-      chdir: /tmp/nginx-1.17.9
+      chdir: /tmp/{{ nginx_version }}
+    when: nginx_config.changed
 
   - name: Copy nginx systemd conf file
     become: true
