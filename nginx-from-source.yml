@@ -50,6 +50,19 @@
       src: nginx.service
       dest: /lib/systemd/system/nginx.service
 
+  - name: enable nginx as services
+    become: true
+    systemd:
+      state: started
+      name: nginx
+    
+  - name: start nginx
+    become: true
+    systemd:
+      state: started
+      name: nginx
+
+
 
 
 
